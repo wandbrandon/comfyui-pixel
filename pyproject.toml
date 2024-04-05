@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "comfyui-pixel"
+version = "0.1.0"
+description = "comfyui nodes for pixel art in SD"
+authors = ["Brandon Wand <wandbrandon@gmail.com>"]
+license = "MIT License"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+torch = "^2.2.2"
+comfyui-annotations = {git = "https://github.com/andrewharp/ComfyUI-Annotations.git", branch = "custom_checks"}
+numpy = "^1.26.4"
+opencv-python = "^4.9.0.80"
+pillow = "^10.3.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
