@@ -1,18 +1,17 @@
-from comfy_annotations import ComfyFunc, ImageTensor, NumberInput, Choice
-from comfyui_pixel.scale_utils import oe_downscale, downscale
-from comfyui_pixel.quantization_utils import palette_reduction, palette_swap
-from comfyui_pixel.tensor_utils import tensor2pil, pil2tensor
+from .something import ComfyFunc, ImageTensor, NumberInput, Choice
+from .scale_utils import oe_downscale, downscale
+from .quantization_utils import palette_reduction, palette_swap
+from .tensor_utils import tensor2pil, pil2tensor
 
 
 @ComfyFunc(
     category="Pixel Image Processing",
     display_name="Pixel Image Downscale By",
     is_output_node=True,
-    debug=True,
 )
 def scale_by(
     image: ImageTensor,
-    downscale_factor: int = NumberInput(0, 0, 4096, 64, "number"),
+    downscale_factor: int = NumberInput(8, 1, 4096, 1, "number"),
     scale_method: str = Choice(["k-centroid", "nearest-neighbors"]),
     outline_expansion: bool = False,
 ) -> ImageTensor:
@@ -33,17 +32,17 @@ def scale_by(
     category="Pixel Image Processing",
     display_name="Pixel Image Reduce Palette",
     is_output_node=True,
-    debug=True,
 )
 def palette_reduce_node(
     image: ImageTensor,
-    palette_size: int = NumberInput(0, 0, 256, 1, "number"),
+    palette_size: int = NumberInput(1, 1, 256, 1, "number"),
     method: str = Choice(
         [
             "Quantize.MEDIANCUT",
             "Quantize.MAXCOVERAGE",
             "Quantize.FASTOCTREE",
             "Elbow Method",
+            "cv2.kmeans",
         ]
     ),
 ) -> ImageTensor:
@@ -57,9 +56,8 @@ def palette_reduce_node(
 @ComfyFunc(
     category="Pixel Image Processing",
     display_name="Pixel Image Palette Swap",
-    validate_inputs=lambda image, palette_image: image and palette_image is not None,
+    # validate_inputs=lambda image, palette_image: image and palette_image,
     is_output_node=True,
-    debug=True,
 )
 def palette_swap_node(
     image: ImageTensor,
@@ -69,12 +67,13 @@ def palette_swap_node(
             "Quantize.MEDIANCUT",
             "Quantize.MAXCOVERAGE",
             "Quantize.FASTOCTREE",
-            "KMeans Elbow Method",
+            "Elbow Method",
+            "cv2.kmeans",
         ]
     ),
 ) -> ImageTensor:
     """Reduce and optionally swap the palette of an image to the specified size."""
 
     image = tensor2pil(image)
-    new_image = palette_swap(image, tensor2pil(palette_image))
+    new_image = palette_swap(image, tensor2pil(palette_image), method=method)
     return pil2tensor(new_image)

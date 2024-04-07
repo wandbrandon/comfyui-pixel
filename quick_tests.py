@@ -1,4 +1,4 @@
-from comfyui_pixel import oe_utils, quantization_utils, scale_utils
+from . import oe_utils, quantization_utils, scale_utils
 from PIL import Image
 from PIL import ImageEnhance
 
@@ -81,7 +81,6 @@ oe_nearest_neighbors_scale = oe_nearest_neighbors_scale.resize(
 # enhancer = ImageEnhance.Contrast(oe_nearest_neighbors_scale)
 # # Factor of 2.0 gives a contrast increase
 # oe_nearest_neighbors_scale = enhancer.enhance(2)
-
 
 oe_nearest_neighbors_scale = quantization_utils.palette_swap(
     oe_nearest_neighbors_scale, palette_image

@@ -6,7 +6,8 @@ import numpy as np
 # Tensor to PIL
 def tensor2pil(image):
     return Image.fromarray(
-        np.clip(255.0 * image.cpu().numpy().squeeze(), 0, 255).astype(np.uint8)
+        np.clip(255.0 * image.cpu().numpy().squeeze(), 0, 255).astype(np.uint8),
+        mode="RGB",
     )
 
 
