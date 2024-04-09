@@ -5,7 +5,7 @@ NODE_DISPLAY_NAME_MAPPINGS = {}
 from . import nodes
 
 # Actually add the @ComfyFunc nodes to what ComfyUI picks up.
-from .something import NODE_CLASS_MAPPINGS, NODE_DISPLAY_NAME_MAPPINGS
+from .comfy_annotations import NODE_CLASS_MAPPINGS, NODE_DISPLAY_NAME_MAPPINGS
 
 NODE_CLASS_MAPPINGS.update(NODE_CLASS_MAPPINGS)
 NODE_DISPLAY_NAME_MAPPINGS.update(NODE_DISPLAY_NAME_MAPPINGS)

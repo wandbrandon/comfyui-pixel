@@ -1,6 +1,6 @@
-from . import oe_utils, quantization_utils, scale_utils
+from .utilities import scale_utils
+from .utilities import quantization_utils
 from PIL import Image
-from PIL import ImageEnhance
 
 downscale_factor = 8
 palette_size = 4
@@ -19,7 +19,7 @@ grid_image = Image.new(
 k_centroid_scale = scale_utils.downscale(
     image=testing_image, downscale_factor=downscale_factor, method="k-centroid"
 )
-k_centroid_scale = quantization_utils.palette_reduction(
+k_centroid_scale = quantization_utils.palette_quantization(
     k_centroid_scale,
     palette_size=palette_size,
     method=palette_method,
@@ -35,7 +35,7 @@ grid_image.paste(k_centroid_scale, (0, 0))
 nearest_neighbors_scale = scale_utils.downscale(
     image=testing_image, downscale_factor=downscale_factor, method="nearest-neighbors"
 )
-nearest_neighbors_scale = quantization_utils.palette_reduction(
+nearest_neighbors_scale = quantization_utils.palette_quantization(
     nearest_neighbors_scale,
     palette_size=palette_size,
     method=palette_method,
@@ -52,7 +52,7 @@ grid_image.paste(nearest_neighbors_scale, (testing_image.width, 0))
 oe_k_centroid_scale = scale_utils.oe_downscale(
     image=testing_image, downscale_factor=downscale_factor, method="k-centroid"
 )
-oe_k_centroid_scale = quantization_utils.palette_reduction(
+oe_k_centroid_scale = quantization_utils.palette_quantization(
     oe_k_centroid_scale,
     palette_size=palette_size,
     method=palette_method,
@@ -69,7 +69,7 @@ grid_image.paste(oe_k_centroid_scale, (0, testing_image.height))
 oe_nearest_neighbors_scale = scale_utils.oe_downscale(
     image=testing_image, downscale_factor=downscale_factor, method="nearest-neighbors"
 )
-oe_nearest_neighbors_scale = quantization_utils.palette_reduction(
+oe_nearest_neighbors_scale = quantization_utils.palette_quantization(
     oe_nearest_neighbors_scale,
     palette_size=palette_size,
     method=palette_method,

@@ -4,7 +4,7 @@ import numpy as np
 from itertools import product
 import cv2
 
-from .oe_utils import outline_expansion, match_color
+from oe_utils import outline_expansion, match_color
 
 
 def k_centroid(image: Image, downscale_factor: int, centroids=2) -> Image:
@@ -48,6 +48,7 @@ def nearest_neighbors(image: Image, downscale_factor: int) -> Image:
     return image.resize((new_width, new_height), Image.NEAREST)
 
 
+# Define the downscale function for node usage
 def downscale(image, downscale_factor: float, method: str) -> Image:
     match method:
         case "k-centroid":
@@ -60,6 +61,7 @@ def downscale(image, downscale_factor: float, method: str) -> Image:
     return downscaled
 
 
+# Define the downscale function with outline expansion for node usage
 def oe_downscale(image, downscale_factor: float, method: str, centroids=2) -> Image:
     # Calculate outline expansion inputs
     # patch_size = round(math.sqrt((image.width / width) * (image.height / height)) * 0.9)

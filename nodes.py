@@ -1,7 +1,7 @@
-from .something import ComfyFunc, ImageTensor, NumberInput, Choice
-from .scale_utils import oe_downscale, downscale
-from .quantization_utils import palette_reduction, palette_swap
-from .tensor_utils import tensor2pil, pil2tensor
+from .comfy_annotations import ComfyFunc, ImageTensor, NumberInput, Choice
+from .utilities.scale_utils import oe_downscale, downscale
+from .utilities.quantization_utils import palette_quantization, palette_swap
+from .utilities.tensor_utils import tensor2pil, pil2tensor
 
 
 @ComfyFunc(
@@ -41,7 +41,6 @@ def palette_reduce_node(
             "Quantize.MEDIANCUT",
             "Quantize.MAXCOVERAGE",
             "Quantize.FASTOCTREE",
-            "Elbow Method",
             "cv2.kmeans",
         ]
     ),
@@ -49,31 +48,22 @@ def palette_reduce_node(
     """Reduce the palette of an image to the specified size."""
 
     image = tensor2pil(image)
-    new_image = palette_reduction(image, palette_size, method)
+    new_image = palette_quantization(image, palette_size, method, elbow_method=False)
     return pil2tensor(new_image)
 
 
 @ComfyFunc(
     category="Pixel Image Processing",
     display_name="Pixel Image Palette Swap",
-    # validate_inputs=lambda image, palette_image: image and palette_image,
     is_output_node=True,
 )
 def palette_swap_node(
     image: ImageTensor,
     palette_image: ImageTensor,
-    method: str = Choice(
-        [
-            "Quantize.MEDIANCUT",
-            "Quantize.MAXCOVERAGE",
-            "Quantize.FASTOCTREE",
-            "Elbow Method",
-            "cv2.kmeans",
-        ]
-    ),
 ) -> ImageTensor:
-    """Reduce and optionally swap the palette of an image to the specified size."""
+    """Swap the palette of an image to the specified size."""
 
     image = tensor2pil(image)
-    new_image = palette_swap(image, tensor2pil(palette_image), method=method)
+    palette_image = tensor2pil(palette_image)
+    new_image = palette_swap(image, palette_image=palette_image)
     return pil2tensor(new_image)
