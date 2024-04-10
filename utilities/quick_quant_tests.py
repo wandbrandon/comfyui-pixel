@@ -3,7 +3,12 @@ import quantization_utils
 from PIL import Image
 from itertools import product
 from PIL import ImageDraw
+from PIL import ImageFont
 
+font = ImageFont.truetype(
+    "/Users/brandonwand/Documents/projects/comfyui-pixel/utilities/treebyfivemodifi.ttf",
+    6,
+)
 palette_size = 8
 methods = [
     [
@@ -13,8 +18,8 @@ methods = [
     ],
     [
         "cv2.kmeans_LAB",
-        "cv2.kmeans_BGR",
-        "sklearn.kmedoids_LAB_deltaE00",
+        "sklearn.kmeans_LAB_deltaE00",
+        "torch.kmedoids_LAB_deltaE00",
     ],
 ]
 
@@ -39,7 +44,7 @@ for x, y in product(range(1, len(methods) + 1), range(len(methods[0]))):
         image=testing_image, palette_size=palette_size, method=curr_method
     )
     img_draw = ImageDraw.Draw(quantized_image)
-    img_draw.text((0, 0), curr_method, (0, 0, 0))
+    img_draw.text((0, 0), curr_method, (0, 0, 0), font=font)
     grid_image.paste(
         quantized_image, (testing_image.width * y, testing_image.height * x)
     )

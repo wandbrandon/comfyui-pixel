@@ -2,23 +2,20 @@ from functools import lru_cache
 from PIL import Image
 import cv2
 import numpy as np
-import sklearn.cluster._kmeans as kmeans
 import kmedoids
-from sklearn.metrics import pairwise_distances
-from skimage import io, color
 import deltae
 import torch
-from tqdm import tqdm
 import torch_utils as torch_utils
 import kornia
-from concurrent.futures import ProcessPoolExecutor
+import sklearn.cluster._kmeans as kmeans
 
 
+@lru_cache
 def deltaE(key):
     X, Y = key
     p1_dict = {"L": X[0], "a": X[1], "b": X[2]}
     p2_dict = {"L": Y[0], "a": Y[1], "b": Y[2]}
-    val = deltae.deltaE(p1_dict, p2_dict)
+    val = deltae.delta_e_2000(p1_dict, p2_dict)
     # print("p1:", p1_dict, "p2:", p2_dict, "val:", val)
     return val
 
@@ -168,9 +165,10 @@ def kmeans_quantization_lab_dE00(image: Image, k: int) -> Image:
 
 
 def kmedoids_quantization_lab_dE00(image: Image, k: int) -> Image:
-    # # Convert image from RGB to Lab colorspace
 
+    # turn image to tensors here.
     rgb_image_tensor = torch.from_numpy(np.array(image))
+    og_image_tensor = rgb_image_tensor.clone()
 
     # normalize to 0, 1
     rgb_image_tensor = rgb_image_tensor / 255.0
@@ -182,68 +180,41 @@ def kmedoids_quantization_lab_dE00(image: Image, k: int) -> Image:
     # conversion
     lab_image_tensor = kornia.color.rgb_to_lab(rgb_image_tensor)
     lab_image_tensor = lab_image_tensor.permute(0, 2, 3, 1)
-    print(lab_image_tensor.shape)
 
-    # image_size = lab_image_tensor.shape[2] * lab_image_tensor.shape[3]
-
-    # # pre compute distance matrix
-    # m = torch_utils.ciede2000_diff(
-    #     lab_image_tensor.repeat_interleave(image_size, dim=3),
-    #     lab_image_tensor.repeat(1, 1, 1, image_size),
-    #     device="mps",
-    # )
-
+    # flatten the image
     flattened = torch.reshape(lab_image_tensor, (-1, 3))
-    print(flattened.shape)
-
-    # num = len(flattened)
-    # similarity_matrix = np.zeros((num, num))
-
-    # for i in tqdm(range(0, num)):
-    #     for j in tqdm(range(i + 1, num)):
-    #         key = (tuple(np.asarray(flattened[i])), tuple(np.asarray(flattened[j])))
-    #         # print(key)
-    #         dist_tmp = deltaE(key)
-    #         similarity_matrix[i][j] = dist_tmp
-    #         similarity_matrix[j][i] = dist_tmp
-
-    def compute_distance(args):
-        i, j, flattened_i, flattened_j = args
-        key = (flattened_i, flattened_j)
-        dist_tmp = deltaE(key)
-        print(key, dist_tmp)
-        return i, j, dist_tmp
-
-    # Prepare arguments for parallel processing
 
     # indices of all unique pairwise comparisons (triu=upper triangle). Offset 1 since we don't need to compare A to A
     x, y = torch.triu_indices(row=len(flattened), col=len(flattened), offset=1)
+
+    # calculate distance matrix
     distance_matrix = torch_utils.ciede2000_diff(
         flattened[x], flattened[y], device="mps"
     )
 
-    print(distance_matrix.cpu().numpy())
+    print(distance_matrix.shape)
 
+    # create the full matrix
+    distance_matrix = torch_utils.unflatten_upper_triangular(distance_matrix)
+
+    # create the kmedoids object and fit
     km = kmedoids.KMedoids(k)
+    labels = km.fit_predict(distance_matrix.cpu().numpy())
 
-    labels = km.fit_predict()
+    # Since we cannot use cluster_centers_, we manually create the quantized image
+    og_image_tensor = torch.reshape(og_image_tensor, (-1, 3))
+    quantized_image = torch.zeros_like(og_image_tensor)
+    for cluster_index in range(km.n_clusters):
+        # Find the original pixel values for the medoid of each cluster
+        medoid_pixel = og_image_tensor[km.medoid_indices_[cluster_index]]
+        # Replace the pixel values of all pixels in this cluster with the medoid's pixel values
+        quantized_image[labels == cluster_index] = medoid_pixel
 
-    # replace
-    quantized_pixels = km.cluster_centers_[labels]
-
-    # reshape
-    quantized_image = quantized_pixels.reshape(lab_image_tensor.shape)
-
-    # Convert the quantized image from Lab to RGB colorspace
-    quantized_image = color.lab2rgb(quantized_image)
-
-    # multiply by 255
-    quantized_image = (quantized_image * 255).astype(np.uint8)
-
-    print(quantized_image)
+    # If the original image shape was (height, width, channels), reshape back to this format
+    quantized_image = quantized_image.reshape(np.asarray(image).shape)
 
     # Convert the image to Pillow format
-    pillow_image = Image.fromarray(quantized_image)
+    pillow_image = Image.fromarray(quantized_image.cpu().numpy().astype(np.uint8))
 
     return pillow_image
 
@@ -280,7 +251,7 @@ def palette_quantization(
             return kmeans_quantization_lab(image, palette_size)
         case "sklearn.kmeans_LAB_deltaE00":
             return kmeans_quantization_lab_dE00(image, palette_size)
-        case "sklearn.kmedoids_LAB_deltaE00":
+        case "torch.kmedoids_LAB_deltaE00":
             return kmedoids_quantization_lab_dE00(image, palette_size)
         case _:
             raise ValueError(f"Unknown method: {method}")
