@@ -1,7 +1,8 @@
 from .comfy_annotations import ComfyFunc, ImageTensor, NumberInput, Choice
 from .utilities.scale_utils import oe_downscale, downscale
 from .utilities.quantization_utils import palette_quantization, palette_swap
-from .utilities.tensor_utils import tensor2pil, pil2tensor
+from .utilities.torch_utils import tensor2pil, pil2tensor
+from .utilities.palette_swapping_utils import palette_swap
 
 
 @ComfyFunc(
@@ -40,8 +41,11 @@ def palette_reduce_node(
         [
             "Quantize.MEDIANCUT",
             "Quantize.MAXCOVERAGE",
-            "Quantize.FASTOCTREE",
-            "cv2.kmeans",
+            "cv2.kmeans_BGR",
+            "cv2.kmeans_RGB",
+            "cv2.kmeans_LAB",
+            "sklearn.kmeans_LAB_deltaE00",
+            "torch.kmedoids_LAB_deltaE00 (WARNING: SLOW)",
         ]
     ),
 ) -> ImageTensor:
@@ -60,10 +64,16 @@ def palette_reduce_node(
 def palette_swap_node(
     image: ImageTensor,
     palette_image: ImageTensor,
+    method: str = Choice(
+        [
+            "Pillow Quantize",
+            "CIELAB Delta E 2000",
+        ]
+    ),
 ) -> ImageTensor:
     """Swap the palette of an image to the specified size."""
 
     image = tensor2pil(image)
     palette_image = tensor2pil(palette_image)
-    new_image = palette_swap(image, palette_image=palette_image)
+    new_image = palette_swap(image, palette_image=palette_image, method=method)
     return pil2tensor(new_image)

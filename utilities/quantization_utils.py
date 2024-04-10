@@ -165,6 +165,14 @@ def kmeans_quantization_lab_dE00(image: Image, k: int) -> Image:
 
 
 def kmedoids_quantization_lab_dE00(image: Image, k: int) -> Image:
+    device = "cpu"
+    if torch.cuda.is_available():
+        device = torch.device("cuda")
+    elif torch.backends.mps.is_available():
+        device = torch.device("mps")
+    else:
+        device = torch.device("cpu")
+        print("Warning: CIE Delta E 2000 is slow on CPU. Consider using CUDA or MPS.")
 
     # turn image to tensors here.
     rgb_image_tensor = torch.from_numpy(np.array(image))
@@ -182,17 +190,19 @@ def kmedoids_quantization_lab_dE00(image: Image, k: int) -> Image:
     lab_image_tensor = lab_image_tensor.permute(0, 2, 3, 1)
 
     # flatten the image
-    flattened = torch.reshape(lab_image_tensor, (-1, 3))
+    flattened = torch.reshape(lab_image_tensor, (-1, 3)).to(device)
 
     # indices of all unique pairwise comparisons (triu=upper triangle). Offset 1 since we don't need to compare A to A
     x, y = torch.triu_indices(row=len(flattened), col=len(flattened), offset=1)
 
-    # calculate distance matrix
-    distance_matrix = torch_utils.ciede2000_diff(
-        flattened[x], flattened[y], device="mps"
-    )
+    x = x.to(device)
+    y = y.to(device)
 
-    print(distance_matrix.shape)
+    distance_matrix = torch_utils.ciede2000_diff(
+        flattened[x],
+        flattened[y],
+        device=device,
+    )
 
     # create the full matrix
     distance_matrix = torch_utils.unflatten_upper_triangular(distance_matrix)
@@ -251,26 +261,7 @@ def palette_quantization(
             return kmeans_quantization_lab(image, palette_size)
         case "sklearn.kmeans_LAB_deltaE00":
             return kmeans_quantization_lab_dE00(image, palette_size)
-        case "torch.kmedoids_LAB_deltaE00":
+        case "torch.kmedoids_LAB_deltaE00 (WARNING: SLOW)":
             return kmedoids_quantization_lab_dE00(image, palette_size)
         case _:
             raise ValueError(f"Unknown method: {method}")
-
-
-# Define the palette_swap function for node usage
-def palette_swap(image: Image, palette_image: Image, method: str):
-    if palette_image is None:
-        raise ValueError("Palette image must be provided for palette swapping.")
-
-    match method:
-        case "Quantize.MAXCOVERAGE":
-            return image.quantize(
-                palette_image=palette_image.convert(
-                    "P", palette=Image.Palette.ADAPTIVE
-                ),
-                method=Image.Quantize.MAXCOVERAGE,
-            ).convert("RGB")
-        case "CIELAB DELTA E":
-            return delta_cie_2000()
-
-    return

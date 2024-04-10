@@ -9,7 +9,7 @@ font = ImageFont.truetype(
     "/Users/brandonwand/Documents/projects/comfyui-pixel/utilities/treebyfivemodifi.ttf",
     6,
 )
-palette_size = 8
+palette_size = 6
 methods = [
     [
         "Quantize.MAXCOVERAGE",
@@ -19,7 +19,7 @@ methods = [
     [
         "cv2.kmeans_LAB",
         "sklearn.kmeans_LAB_deltaE00",
-        "torch.kmedoids_LAB_deltaE00",
+        "torch.kmedoids_LAB_deltaE00 (WARNING: SLOW)",
     ],
 ]
 
