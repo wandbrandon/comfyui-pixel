@@ -7,20 +7,18 @@ from PIL import ImageFont
 
 
 font = ImageFont.truetype(
-    "/Users/brandonwand/Documents/projects/comfyui-pixel/utilities/treebyfivemodifi.ttf",
+    "/Users/brandonwand/Documents/projects/comfyui-pixel/examples/treebyfivemodifi.ttf",
     6,
 )
-palette_size = 6
 methods = [
-    ["Pillow Quantize", "CIELAB Delta E 20000"],
-    ["deltaE CC1", "deltaE CC2"],
-    ["Pillow CC1", "Pillow CC2"],
+    ["Pillow Quantize", "DeltaE 2000", "Wildcard Testing"],
+    ["CC1", "CC2", "Wildcard Testing2"],
 ]
 
 testing_image = Image.open("examples/tigerrobot.png").convert("RGB")
 custom_image = Image.open("examples/custom.png").convert("RGB")
 # testing_image = scale_utils.oe_downscale(testing_image, 3, "nearest-neighbors")
-testing_palette_image = Image.open("examples/retrotronic-dx-1x.png")
+testing_palette_image = Image.open("examples/oil-6-1x.png")
 
 # Create a grid to display the images
 grid_size = len(methods), max([len(i) for i in methods])
@@ -38,7 +36,6 @@ for x in range(len(methods)):
             image=testing_image,
             palette_image=testing_palette_image,
             method=curr_method,
-            gamma=0.98,
         )
 
         img_draw = ImageDraw.Draw(quantized_image)
