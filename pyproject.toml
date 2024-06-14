@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "comfyui-pixel"
 version = "0.1.0"
-description = ""
+description = "pixel art workshop nodes for comfyui."
 authors = ["Brandon Wand <wandbrandon@gmail.com>"]
 license = "MIT"
 readme = "README.md"
